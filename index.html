@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DoggoDate Vue</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header class="app-header">
+        <div class="logo">
+          <span class="logo-mark">🐶</span>
+          <div>
+            <h1>DoggoDate</h1>
+            <p class="subtitle">Il Tinder dei cagnolini</p>
+          </div>
+        </div>
+
+        <nav class="app-nav">
+          <button
+            :class="['nav-item', { active: route === 'home' }]"
+            @click="setRoute('home')"
+          >
+            Home
+          </button>
+          <button
+            :class="['nav-item', { active: route === 'match' }]"
+            @click="setRoute('match')"
+          >
+            Match
+          </button>
+          <button
+            :class="['nav-item', { active: route === 'profile' }]"
+            @click="setRoute('profile')"
+          >
+            Profilo
+          </button>
+        </nav>
+      </header>
+
+      <main class="app-content">
+        <section class="hero-card" v-if="route === 'home'">
+          <div class="hero-copy">
+            <h2>Il tuo dating per cagnolini</h2>
+            <p>
+              Scopri profili buffi, fatti consigliare da DoggoBot e trova nuovi
+              amici per il tuo cane.
+            </p>
+            <div class="hero-actions">
+              <button class="button primary" @click="setRoute('match')">
+                Inizia
+              </button>
+              <button class="button ghost" @click="scrollToInfo">
+                Come funziona
+              </button>
+            </div>
+          </div>
+          <div class="hero-visual">
+            <div class="pillars">
+              <div class="pillar">
+                <strong>Vue powered</strong>
+                <span>Interattivo e dinamico</span>
+              </div>
+              <div class="pillar">
+                <strong>API pubblica</strong>
+                <span>Foto reali dai cani di Dog CEO</span>
+              </div>
+              <div class="pillar">
+                <strong>Web service</strong>
+                <span>Server Node.js + Express</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="info-section" id="info" v-if="route === 'home'">
+          <div class="info-card">
+            <h3>Come funziona</h3>
+            <ol>
+              <li>Vedi i migliori match per il tuo cagnolino.</li>
+              <li>Seleziona il profilo e controlla i dettagli.</li>
+              <li>Usa il chat bot per consigli e organizza l'incontro.</li>
+            </ol>
+          </div>
+          <div
+            class="info-visual"
+            role="img"
+            aria-label="Decorazioni giocose con emoji di cani"
+          >
+            <div class="bubble bubble-1">
+              <span class="emoji">🎾</span> Gioco
+            </div>
+            <div class="bubble bubble-2">
+              <span class="emoji">🐾</span> Profili
+            </div>
+            <div class="bubble bubble-3">
+              <span class="emoji">🦴</span> Incontri
+            </div>
+          </div>
+        </section>
+
+        <section class="match-page" v-if="route === 'match'">
+          <div class="page-header">
+            <div>
+              <h2>Match disponibili</h2>
+              <p>Profili aggiornati dal nostro servizio pubblico.</p>
+            </div>
+            <button class="button ghost" @click="fetchDogs">Aggiorna</button>
+          </div>
+
+          <div class="match-grid">
+            <article
+              v-for="profile in profiles"
+              :key="profile.id"
+              class="dog-card"
+              @click="selectProfile(profile)"
+            >
+              <div
+                class="dog-photo"
+                :style="{ backgroundImage: `url(${profile.image})` }"
+              ></div>
+              <div class="dog-info">
+                <div>
+                  <h4>{{ profile.name }}, {{ profile.age }} anni</h4>
+                  <p>{{ profile.description }}</p>
+                </div>
+                <div class="tags">
+                  <span v-for="tag in profile.tags" :key="tag">{{ tag }}</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="status-bar" v-if="loading">
+            Caricamento dei profili...
+          </div>
+          <div class="status-bar error" v-if="error">Errore: {{ error }}</div>
+        </section>
+
+        <section class="profile-page" v-if="route === 'profile'">
+          <div class="page-header">
+            <div>
+              <h2>Profilo selezionato</h2>
+              <p>
+                Controlla i dettagli del tuo match e chiedi consiglio al bot.
+              </p>
+            </div>
+            <button class="button ghost" @click="setRoute('match')">
+              Torna ai match
+            </button>
+          </div>
+
+          <div class="profile-panel">
+            <div class="profile-card" v-if="selectedProfile">
+              <div
+                class="dog-photo profile-photo"
+                :style="{ backgroundImage: `url(${selectedProfile.image})` }"
+              ></div>
+              <div class="card-content">
+                <h3>{{ selectedProfile.name }}</h3>
+                <p>{{ selectedProfile.description }}</p>
+                <div class="tags">
+                  <span v-for="tag in selectedProfile.tags" :key="tag"
+                    >{{ tag }}</span
+                  >
+                </div>
+                <div class="info-list">
+                  <div>
+                    <strong>100m</strong>
+                    <span>dal tuo parco</span>
+                  </div>
+                  <div>
+                    <strong>{{ selectedProfile.energy }}</strong>
+                    <span>Energia</span>
+                  </div>
+                  <div>
+                    <strong>{{ selectedProfile.friendliness }}</strong>
+                    <span>Socievolezza</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-card">
+              <div class="chat-header">
+                <h4>DoggoBot</h4>
+                <span>Consigli al volo</span>
+              </div>
+              <div class="chat-messages">
+                <div
+                  v-for="(message, index) in messages"
+                  :key="index"
+                  :class="['chat-message', message.sender]"
+                >
+                  <p>{{ message.text }}</p>
+                </div>
+              </div>
+              <form class="chat-form" @submit.prevent="sendChat">
+                <input v-model="userInput" placeholder="Scrivi qualcosa..." />
+                <button class="button primary" type="submit">Invia</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="status-bar" v-if="!selectedProfile">
+            Seleziona prima un match dalla pagina Match.
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const { createApp } = Vue;
+
+      createApp({
+        data() {
+          return {
+            route: "home",
+            profiles: [],
+            selectedProfile: null,
+            loading: false,
+            error: "",
+            messages: [
+              {
+                sender: "bot",
+                text: "Ciao! Dimmi come posso aiutarti a trovare il match perfetto.",
+              },
+            ],
+            userInput: "",
+          };
+        },
+        methods: {
+          setRoute(route) {
+            this.route = route;
+            if (route === "match" && !this.profiles.length) {
+              this.fetchDogs();
+            }
+            if (
+              route === "profile" &&
+              !this.selectedProfile &&
+              this.profiles.length
+            ) {
+              this.selectedProfile = this.profiles[0];
+            }
+          },
+          scrollToInfo() {
+            const info = document.querySelector("#info");
+            info?.scrollIntoView({ behavior: "smooth" });
+          },
+          async fetchDogs() {
+            this.loading = true;
+            this.error = "";
+            try {
+              const response = await fetch("/api/dogs");
+              if (!response.ok) {
+                throw new Error("Impossibile caricare i profili");
+              }
+              const data = await response.json();
+              this.profiles = data;
+              if (!this.selectedProfile) {
+                this.selectedProfile = data[0] || null;
+              }
+            } catch (err) {
+              this.error = err.message;
+            } finally {
+              this.loading = false;
+            }
+          },
+          selectProfile(profile) {
+            this.selectedProfile = profile;
+            this.route = "profile";
+          },
+          async sendChat() {
+            const text = this.userInput.trim();
+            if (!text) return;
+            this.messages.push({ sender: "user", text });
+            this.userInput = "";
+            // show temporary typing indicator
+            this.messages.push({
+              sender: "bot",
+              text: "DoggoBot sta pensando...",
+            });
+            const chatBox = document.querySelector(".chat-messages");
+            if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+              const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text }),
+              });
+              const data = await res.json();
+              // remove typing indicator
+              const typingIndex = this.messages.findIndex(
+                (m) =>
+                  m.sender === "bot" && m.text === "DoggoBot sta pensando...",
+              );
+              if (typingIndex !== -1) this.messages.splice(typingIndex, 1);
+
+              if (!res.ok) {
+                this.messages.push({
+                  sender: "bot",
+                  text: "Mi dispiace, non riesco a rispondere ora.",
+                });
+              } else {
+                this.messages.push({
+                  sender: "bot",
+                  text: data.reply || "Non ho capito, riprova.",
+                });
+              }
+            } catch (err) {
+              console.error(err);
+              // remove typing indicator
+              const typingIndex = this.messages.findIndex(
+                (m) =>
+                  m.sender === "bot" && m.text === "DoggoBot sta pensando...",
+              );
+              if (typingIndex !== -1) this.messages.splice(typingIndex, 1);
+              this.messages.push({
+                sender: "bot",
+                text: "Errore di rete, riprova più tardi.",
+              });
+            } finally {
+              // ensure scroll to bottom
+              setTimeout(() => {
+                const chatBox = document.querySelector(".chat-messages");
+                if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+              }, 100);
+            }
+          },
+          getReply(text) {
+            const lower = text.toLowerCase();
+            if (lower.includes("gioco") || lower.includes("palla")) {
+              return "Ottimo! Porta il tuo cane in un parco con spazio aperto e una palla resistente.";
+            }
+            if (lower.includes("timido") || lower.includes("paura")) {
+              return "Nessun problema, scegli un match tranquillo e dategli tempo per ambientarsi.";
+            }
+            if (lower.includes("cibo") || lower.includes("snack")) {
+              return "Ricorda di portare snack leggeri e premi per rinforzare i momenti felici.";
+            }
+            if (lower.includes("match") || lower.includes("incontro")) {
+              return "I match migliori hanno energia simile: brutta idea un cane energico con uno pigro.";
+            }
+            return "Bellissima domanda! Ti consiglio di scegliere un amico con tag simili e provare una passeggiata al parco.";
+          },
+        },
+        mounted() {
+          this.fetchDogs();
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>

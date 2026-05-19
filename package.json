@@ -1,0 +1,13 @@
+{
+  "name": "doggdate-vue-app",
+  "version": "1.0.0",
+  "description": "DoggoDate in Vue con API pubblica e web service",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
